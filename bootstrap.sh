@@ -3,13 +3,13 @@ set -euo pipefail
 
 # Bootstrap an Ubuntu Server node as a Docker + GHA runner
 #
-# Usage: ./bootstrap.sh <tailscale-authkey> <github-runner-token> [hostname]
+# Usage: ./bootstrap.sh <tailscale-authkey> <github-pat> [hostname]
 #
 # Run this after a fresh Ubuntu Server install:
-#   curl -sL https://raw.githubusercontent.com/notturingtested/homelab/main/bootstrap.sh | bash -s -- tskey-auth-XXXXX GHTOKEN node1
+#   curl -sL https://raw.githubusercontent.com/notturingtested/homelab/main/bootstrap.sh | sudo bash -s -- tskey-auth-XXXXX github_pat_XXXXX node1
 
-TS_AUTHKEY="${1:?Usage: $0 <tailscale-authkey> <github-runner-token> [hostname]}"
-GH_RUNNER_TOKEN="${2:?Provide GitHub runner registration token}"
+TS_AUTHKEY="${1:?Usage: $0 <tailscale-authkey> <github-pat> [hostname]}"
+GH_PAT="${2:?Provide GitHub PAT with admin:org or repo Administration permission}"
 HOSTNAME="${3:-node1}"
 
 echo "==> Setting hostname to ${HOSTNAME}"
@@ -51,6 +51,18 @@ mkdir -p "${RUNNER_HOME}"
 RUNNER_VERSION=$(curl -s https://api.github.com/repos/actions/runner/releases/latest | grep -oP '"tag_name": "v\K[^"]+')
 curl -sL "https://github.com/actions/runner/releases/download/v${RUNNER_VERSION}/actions-runner-linux-x64-${RUNNER_VERSION}.tar.gz" | tar xz -C "${RUNNER_HOME}"
 chown -R runner:runner "${RUNNER_HOME}"
+
+# Exchange PAT for a runner registration token
+echo "==> Getting runner registration token..."
+GH_RUNNER_TOKEN=$(curl -s -X POST \
+  -H "Authorization: token ${GH_PAT}" \
+  https://api.github.com/repos/handshapes/handshapes/actions/runners/registration-token \
+  | grep -oP '"token"\s*:\s*"\K[^"]+')
+
+if [ -z "${GH_RUNNER_TOKEN}" ]; then
+  echo "ERROR: Failed to get registration token. Check your PAT permissions."
+  exit 1
+fi
 
 # Configure runner (must run as runner user from the runner directory)
 su - runner -c "cd ${RUNNER_HOME} && ./config.sh \
