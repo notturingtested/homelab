@@ -19,6 +19,7 @@ echo "==> Configuring lid close to ignore (laptop stays on)"
 mkdir -p /etc/systemd/logind.conf.d
 printf '[Login]\nHandleLidSwitch=ignore\nHandleLidSwitchExternalPower=ignore\nHandleLidSwitchDocked=ignore\n' > /etc/systemd/logind.conf.d/lid.conf
 systemctl restart systemd-logind
+systemctl mask sleep.target suspend.target hibernate.target hybrid-sleep.target
 
 echo "==> Enabling unattended upgrades"
 apt-get update
