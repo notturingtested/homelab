@@ -12,6 +12,8 @@ DISK="${2:?Provide target disk (e.g., /dev/sda, /dev/nvme0n1)}"
 TS_AUTHKEY="${3:?Provide Tailscale pre-auth key}"
 GH_RUNNER_TOKEN="${4:?Provide GitHub runner registration token}"
 
+export NIX_CONFIG="experimental-features = nix-command flakes"
+
 echo "==> Bootstrapping ${HOSTNAME} on ${DISK}"
 
 # Partition and mount using disko
