@@ -55,6 +55,24 @@ sudo -u runner ./config.sh \
 ./svc.sh install runner
 ./svc.sh start
 
+echo "==> Enabling unattended upgrades"
+apt-get install -y unattended-upgrades
+cat > /etc/apt/apt.conf.d/50unattended-upgrades << 'UEOF'
+Unattended-Upgrade::Allowed-Origins {
+    "${distro_id}:${distro_codename}";
+    "${distro_id}:${distro_codename}-security";
+    "${distro_id}ESMApps:${distro_codename}-apps-security";
+    "${distro_id}ESM:${distro_codename}-infra-security";
+    "Docker:${distro_codename}";
+};
+Unattended-Upgrade::Automatic-Reboot "true";
+Unattended-Upgrade::Automatic-Reboot-Time "04:00";
+UEOF
+cat > /etc/apt/apt.conf.d/20auto-upgrades << 'AEOF'
+APT::Periodic::Update-Package-Lists "1";
+APT::Periodic::Unattended-Upgrade "1";
+AEOF
+
 echo "==> Configuring lid close to ignore (laptop stays on)"
 mkdir -p /etc/systemd/logind.conf.d
 cat > /etc/systemd/logind.conf.d/lid.conf << EOF
