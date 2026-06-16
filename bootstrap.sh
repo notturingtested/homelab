@@ -15,8 +15,18 @@ HOSTNAME="${3:-node1}"
 echo "==> Setting hostname to ${HOSTNAME}"
 hostnamectl set-hostname "${HOSTNAME}"
 
-echo "==> Installing Docker"
+echo "==> Configuring lid close to ignore (laptop stays on)"
+mkdir -p /etc/systemd/logind.conf.d
+printf '[Login]\nHandleLidSwitch=ignore\nHandleLidSwitchExternalPower=ignore\nHandleLidSwitchDocked=ignore\n' > /etc/systemd/logind.conf.d/lid.conf
+systemctl restart systemd-logind
+
+echo "==> Enabling unattended upgrades"
 apt-get update
+apt-get install -y unattended-upgrades
+printf 'APT::Periodic::Update-Package-Lists "1";\nAPT::Periodic::Unattended-Upgrade "1";\n' > /etc/apt/apt.conf.d/20auto-upgrades
+printf 'Unattended-Upgrade::Allowed-Origins {\n  "${distro_id}:${distro_codename}";\n  "${distro_id}:${distro_codename}-security";\n  "${distro_id}ESMApps:${distro_codename}-apps-security";\n  "${distro_id}ESM:${distro_codename}-infra-security";\n  "Docker:${distro_codename}";\n};\nUnattended-Upgrade::Automatic-Reboot "true";\nUnattended-Upgrade::Automatic-Reboot-Time "04:00";\n' > /etc/apt/apt.conf.d/50unattended-upgrades
+
+echo "==> Installing Docker"
 apt-get install -y ca-certificates curl
 install -m 0755 -d /etc/apt/keyrings
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
@@ -27,7 +37,7 @@ apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin do
 
 echo "==> Installing Tailscale"
 curl -fsSL https://tailscale.com/install.sh | sh
-tailscale up --authkey "${TS_AUTHKEY}" --ssh
+tailscale up --authkey "${TS_AUTHKEY}" --ssh --accept-routes
 
 echo "==> Setting up GitHub Actions runner"
 useradd -m -s /bin/bash runner || true
@@ -55,36 +65,10 @@ sudo -u runner ./config.sh \
 ./svc.sh install runner
 ./svc.sh start
 
-echo "==> Enabling unattended upgrades"
-apt-get install -y unattended-upgrades
-cat > /etc/apt/apt.conf.d/50unattended-upgrades << 'UEOF'
-Unattended-Upgrade::Allowed-Origins {
-    "${distro_id}:${distro_codename}";
-    "${distro_id}:${distro_codename}-security";
-    "${distro_id}ESMApps:${distro_codename}-apps-security";
-    "${distro_id}ESM:${distro_codename}-infra-security";
-    "Docker:${distro_codename}";
-};
-Unattended-Upgrade::Automatic-Reboot "true";
-Unattended-Upgrade::Automatic-Reboot-Time "04:00";
-UEOF
-cat > /etc/apt/apt.conf.d/20auto-upgrades << 'AEOF'
-APT::Periodic::Update-Package-Lists "1";
-APT::Periodic::Unattended-Upgrade "1";
-AEOF
-
-echo "==> Configuring lid close to ignore (laptop stays on)"
-mkdir -p /etc/systemd/logind.conf.d
-cat > /etc/systemd/logind.conf.d/lid.conf << EOF
-[Login]
-HandleLidSwitch=ignore
-HandleLidSwitchExternalPower=ignore
-HandleLidSwitchDocked=ignore
-EOF
-systemctl restart systemd-logind
-
 echo ""
 echo "==> Done! ${HOSTNAME} is now:"
 echo "    - On your Tailscale network"
 echo "    - Running as a GitHub Actions runner"
 echo "    - Docker enabled"
+echo "    - Lid close ignored"
+echo "    - Unattended upgrades enabled (reboots at 4am)"
