@@ -51,17 +51,17 @@ RUNNER_VERSION=$(curl -s https://api.github.com/repos/actions/runner/releases/la
 curl -sL "https://github.com/actions/runner/releases/download/v${RUNNER_VERSION}/actions-runner-linux-x64-${RUNNER_VERSION}.tar.gz" | tar xz -C "${RUNNER_HOME}"
 chown -R runner:runner "${RUNNER_HOME}"
 
-# Configure runner
-cd "${RUNNER_HOME}"
-sudo -u runner ./config.sh \
-  --url "https://github.com/handshapes/handshapes" \
-  --token "${GH_RUNNER_TOKEN}" \
-  --name "${HOSTNAME}" \
-  --labels "ubuntu,docker,self-hosted" \
+# Configure runner (must run as runner user from the runner directory)
+su - runner -c "cd ${RUNNER_HOME} && ./config.sh \
+  --url https://github.com/handshapes/handshapes \
+  --token ${GH_RUNNER_TOKEN} \
+  --name ${HOSTNAME} \
+  --labels ubuntu,docker,self-hosted \
   --unattended \
-  --replace
+  --replace"
 
 # Install as service
+cd "${RUNNER_HOME}"
 ./svc.sh install runner
 ./svc.sh start
 
