@@ -2,7 +2,10 @@
 set -euo pipefail
 
 # Kickstart a homelab node from a NixOS live ISO
-# Usage: curl -sL https://raw.githubusercontent.com/notturingtested/homelab/main/kickstart.sh | bash
+#
+# Run:
+#   wget -O /tmp/kickstart.sh https://raw.githubusercontent.com/notturingtested/homelab/main/kickstart.sh
+#   bash /tmp/kickstart.sh
 
 echo "=== Homelab Node Kickstart ==="
 echo ""
@@ -45,7 +48,8 @@ fi
 
 # Fetch repo
 echo "==> Downloading homelab config..."
-curl -sL https://github.com/notturingtested/homelab/archive/main.tar.gz | tar xz -C /tmp
+wget -qO /tmp/homelab.tar.gz https://github.com/notturingtested/homelab/archive/main.tar.gz
+tar xzf /tmp/homelab.tar.gz -C /tmp
 cd /tmp/homelab-main/nixos
 
 # Run bootstrap
