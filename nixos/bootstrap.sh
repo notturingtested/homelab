@@ -16,14 +16,9 @@ export NIX_CONFIG="experimental-features = nix-command flakes"
 
 echo "==> Bootstrapping ${HOSTNAME} on ${DISK}"
 
-# Partition and mount using disko
+# Partition, format, and mount using disko
 echo "==> Running disko to partition ${DISK}"
-nix run github:nix-community/disko -- --mode disko --flake ".#${HOSTNAME}" --arg device "\"${DISK}\""
-
-# Mount the filesystem
-mount /dev/disk/by-partlabel/root /mnt
-mkdir -p /mnt/boot
-mount /dev/disk/by-partlabel/ESP /mnt/boot
+nix run github:nix-community/disko -- --mode destroy,format,mount --flake ".#${HOSTNAME}"
 
 # Install NixOS
 echo "==> Installing NixOS for ${HOSTNAME}"
