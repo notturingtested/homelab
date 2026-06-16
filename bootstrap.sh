@@ -54,10 +54,11 @@ chown -R runner:runner "${RUNNER_HOME}"
 
 # Exchange PAT for a runner registration token
 echo "==> Getting runner registration token..."
-GH_RUNNER_TOKEN=$(curl -s -X POST \
+RESPONSE=$(curl -s -X POST \
   -H "Authorization: token ${GH_PAT}" \
-  https://api.github.com/repos/handshapes/handshapes/actions/runners/registration-token \
-  | grep -oP '"token"\s*:\s*"\K[^"]+')
+  https://api.github.com/repos/handshapes/handshapes/actions/runners/registration-token)
+echo "API response: ${RESPONSE}"
+GH_RUNNER_TOKEN=$(echo "${RESPONSE}" | sed -n 's/.*"token" *: *"\([^"]*\)".*/\1/p')
 
 if [ -z "${GH_RUNNER_TOKEN}" ]; then
   echo "ERROR: Failed to get registration token. Check your PAT permissions."
