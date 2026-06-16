@@ -1,0 +1,57 @@
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: actions-runner-controller
+  namespace: actions-runner-system
+spec:
+  interval: 1h
+  url: oci://ghcr.io/actions/actions-runner-controller-charts
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: arc
+  namespace: actions-runner-system
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: gha-runner-scale-set-controller
+      sourceRef:
+        kind: HelmRepository
+        name: actions-runner-controller
+  values: {}
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: arc-runners
+  namespace: actions-runner-system
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: gha-runner-scale-set
+      sourceRef:
+        kind: HelmRepository
+        name: actions-runner-controller
+  values:
+    githubConfigUrl: "https://github.com/YOUR_ORG"  # TODO: org or repo URL
+    githubConfigSecret:
+      github_token: ""  # TODO: use sealed-secret or external-secrets
+    maxRunners: 8
+    minRunners: 0
+    containerMode:
+      type: "dind"  # Docker-in-Docker for full container support
+    template:
+      spec:
+        containers:
+          - name: runner
+            image: ghcr.io/actions/actions-runner:latest
+            resources:
+              requests:
+                cpu: "1"
+                memory: "2Gi"
+              limits:
+                cpu: "4"
+                memory: "8Gi"
