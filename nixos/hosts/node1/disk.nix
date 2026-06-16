@@ -6,7 +6,7 @@
   disko.devices = {
     disk = {
       main = {
-        device = "/dev/sda";  # TODO: update per host (nvme0n1, sda, etc.)
+        device = "/dev/nvme0n1";
         type = "disk";
         content = {
           type = "gpt";

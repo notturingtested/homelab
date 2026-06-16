@@ -19,7 +19,7 @@ if [ -n "${4:-}" ]; then
 else
   echo "Detecting disk..."
   lsblk -d -o NAME,SIZE,MODEL,TRAN | grep -v "loop\|sr\|ram\|NAME"
-  DISK="/dev/$(lsblk -d -b -o NAME,SIZE,TRAN | grep -v "loop\|sr\|ram\|NAME" | grep -v "usb" | sort -k2 -rn | head -1 | awk '{print $1}')"
+  DISK="/dev/$(lsblk -d -n -b -o NAME,SIZE,TRAN | grep -E "nvme|sata|ata" | sort -k2 -rn | head -1 | awk '{print $1}')"
   echo "Auto-selected: ${DISK}"
 fi
 
