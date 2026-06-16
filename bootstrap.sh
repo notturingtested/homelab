@@ -27,6 +27,15 @@ apt-get install -y unattended-upgrades
 printf 'APT::Periodic::Update-Package-Lists "1";\nAPT::Periodic::Unattended-Upgrade "1";\n' > /etc/apt/apt.conf.d/20auto-upgrades
 printf 'Unattended-Upgrade::Allowed-Origins {\n  "${distro_id}:${distro_codename}";\n  "${distro_id}:${distro_codename}-security";\n  "${distro_id}ESMApps:${distro_codename}-apps-security";\n  "${distro_id}ESM:${distro_codename}-infra-security";\n  "Docker:${distro_codename}";\n};\nUnattended-Upgrade::Automatic-Reboot "true";\nUnattended-Upgrade::Automatic-Reboot-Time "04:00";\n' > /etc/apt/apt.conf.d/50unattended-upgrades
 
+echo "==> Setting up SSH keys from GitHub"
+SETUP_USER=$(logname 2>/dev/null || echo "${SUDO_USER:-notturingtested}")
+SETUP_HOME=$(eval echo "~${SETUP_USER}")
+mkdir -p "${SETUP_HOME}/.ssh"
+curl -sL https://github.com/notturingtested.keys > "${SETUP_HOME}/.ssh/authorized_keys"
+chmod 700 "${SETUP_HOME}/.ssh"
+chmod 600 "${SETUP_HOME}/.ssh/authorized_keys"
+chown -R "${SETUP_USER}:${SETUP_USER}" "${SETUP_HOME}/.ssh"
+
 echo "==> Installing Docker"
 apt-get install -y ca-certificates curl
 install -m 0755 -d /etc/apt/keyrings
