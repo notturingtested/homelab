@@ -44,7 +44,7 @@ chown -R runner:runner "${RUNNER_HOME}"
 # Configure runner
 cd "${RUNNER_HOME}"
 sudo -u runner ./config.sh \
-  --url "https://github.com/notturingtested" \
+  --url "https://github.com/handshapes/handshapes" \
   --token "${GH_RUNNER_TOKEN}" \
   --name "${HOSTNAME}" \
   --labels "ubuntu,docker,self-hosted" \
